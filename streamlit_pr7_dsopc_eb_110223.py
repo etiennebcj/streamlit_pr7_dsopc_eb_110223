@@ -11,7 +11,7 @@ import shap
 from sklearn.cluster import KMeans
 from zipfile import ZipFile
 from lightgbm import LGBMClassifier
-from function_pca import pca_maker
+# from function_pca import pca_maker
 from sklearn.decomposition import PCA
 # import plotly.graph_objects as go
 # plt.style.use('fivethirtyeight')
@@ -129,6 +129,45 @@ def perform_pca(data_import):
     return scatter_column.plotly_chart(fig)
 
 
+def pca_maker(data_import):
+    numerical_columns_list = []
+    categorical_columns_list = []
+
+    for i in data_import.columns:
+        if data_import[i].dtype == np.dtype("float64") or data_import[i].dtype == np.dtype("int64"):
+            numerical_columns_list.append(data_import[i])
+        else:
+            categorical_columns_list.append(data_import[i])
+
+    numerical_data = pd.concat(numerical_columns_list, axis=1)
+    # categorical_data = pd.concat(categorical_columns_list, axis=1)
+
+    numerical_data = numerical_data.apply(lambda x: x.fillna(np.mean(x)))
+
+
+    # scaler = StandardScaler()
+
+    # scaled_values = scaler.fit_transform(numerical_data)
+
+
+    pca1 = PCA(random_state=7)
+
+    # pca_data = pca1.fit_transform(scaled_values)
+    pca_data = pca1.fit_transform(data_import.iloc[:, :-1])
+
+    pca_data = pd.DataFrame(pca_data, index=data_import.index)
+        
+    new_column_names = ["PCA_" + str(i) for i in range(1, len(pca_data.columns) + 1)]
+
+    column_mapper = dict(zip(list(pca_data.columns), new_column_names))
+
+    pca_data = pca_data.rename(columns=column_mapper)
+
+    output = pd.concat([data_import, pca_data], axis=1)
+
+    # return pca1 , scaled_values , output, list(categorical_data.columns), new_column_names , list(numerical_data.columns)
+    return pca1, output, new_column_names, list(numerical_data.columns)
+    
 
 # Global feature importance
 @st.cache
